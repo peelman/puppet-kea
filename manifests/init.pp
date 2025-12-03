@@ -3,7 +3,8 @@
 #   Installs and configures ISC Kea from Cloudsmith repositories.
 #
 # @param repo_version
-#   The Kea repository version to use (e.g., '3-0', '2-6', 'dev').
+#   The Kea repository version to use (e.g., '3-0', '3-1', 'dev').
+#   This module only supports Kea 3.0.x and newer versions.
 #   Defaults to '3-0' (current LTS).
 #
 # @param manage_repo

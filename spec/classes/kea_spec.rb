@@ -36,10 +36,10 @@ describe 'kea' do
       end
 
       context 'with custom repo_version' do
-        let(:params) { { repo_version: '2-6' } }
+        let(:params) { { repo_version: '3-1' } }
 
         it { is_expected.to compile.with_all_deps }
-        it { is_expected.to contain_apt__source('isc-kea-2-6') }
+        it { is_expected.to contain_apt__source('isc-kea-3-1') }
       end
 
       context 'with mysql_backend enabled' do

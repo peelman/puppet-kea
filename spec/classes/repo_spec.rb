@@ -56,7 +56,7 @@ describe 'kea::repo' do
         let(:pre_condition) do
           <<-PUPPET
           class { 'kea':
-            repo_version => '2-6',
+            repo_version => '3-1',
           }
           PUPPET
         end
@@ -64,12 +64,12 @@ describe 'kea::repo' do
         it { is_expected.to compile.with_all_deps }
 
         it do
-          is_expected.to contain_apt__source('isc-kea-2-6').with(
-            'location' => %r{kea-2-6},
+          is_expected.to contain_apt__source('isc-kea-3-1').with(
+            'location' => %r{kea-3-1},
           )
         end
 
-        it { is_expected.to contain_exec('download-isc-kea-2-6-key') }
+        it { is_expected.to contain_exec('download-isc-kea-3-1-key') }
       end
     end
   end

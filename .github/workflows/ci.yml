@@ -5,11 +5,9 @@ on:
   push:
     branches:
       - main
-      - master
   pull_request:
     branches:
       - main
-      - master
 
 jobs:
   lint:
@@ -29,7 +27,7 @@ jobs:
         run: bundle install
 
       - name: Run puppet-lint
-        run: bundle exec rake lint
+        run: bundle exec rake lint --trace
 
       - name: Check metadata.json
         run: bundle exec rake metadata_lint
