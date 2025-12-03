@@ -143,13 +143,16 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - name: Build module
+      - name: Install dependencies
         run: |
+          bundle install
           gem install puppet-blacksmith
-          rake build
+
+      - name: Build module
+        run: bundle exec rake build
 
       - name: Publish to Forge
-        run: rake module:push
+        run: bundle exec rake module:push
         env:
           BLACKSMITH_FORGE_URL: https://forgeapi.puppet.com
           BLACKSMITH_FORGE_USERNAME: ${{ secrets.FORGE_USERNAME }}
