@@ -16,7 +16,8 @@ class kea::repo {
   $repo_url = "https://dl.cloudsmith.io/public/isc/kea-${repo_version}/deb/${os_name_lower}"
 
   # ISC Cloudsmith GPG key details
-  $gpg_key_url = "https://dl.cloudsmith.io/public/isc/kea-${repo_version}/gpg.156BEE545D1421E9B8AC6DBA3EE89BDCE6A6E535.key"
+  # Key ID B16C44CD45514C3C is used by Kea 3.0+
+  $gpg_key_url = "https://dl.cloudsmith.io/public/isc/kea-${repo_version}/gpg.B16C44CD45514C3C.key"
   $keyring_path = '/etc/apt/keyrings/isc-kea.gpg'
 
   # Ensure keyrings directory exists

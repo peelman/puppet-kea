@@ -49,7 +49,7 @@ describe 'kea class' do
 
     describe file('/etc/kea') do
       it { is_expected.to be_directory }
-      it { is_expected.to be_owned_by 'root' }
+      it { is_expected.to be_owned_by '_kea' }
     end
 
     describe file('/etc/kea/kea-dhcp4.conf') do
@@ -57,6 +57,15 @@ describe 'kea class' do
       it { is_expected.to be_owned_by 'root' }
       its(:content) { is_expected.to match(/"Dhcp4":/) }
       its(:content) { is_expected.to match(/"subnet4":/) }
+    end
+
+    describe file('/etc/kea/kea-dhcp4-subnets.json') do
+      it { is_expected.to be_file }
+      its(:content) { is_expected.to match(/  <\?include \"\/etc\/kea\/subnets4.d\/192_168_100_0_24.json\"?>/) }
+    end
+
+    describe file('/etc/kea/subnets4.d/192_168_100_0_24.json') do
+      it { is_expected.to be_file }
       its(:content) { is_expected.to match(/192\.168\.100\.0\/24/) }
     end
 
@@ -114,6 +123,15 @@ describe 'kea class' do
       it { is_expected.to be_file }
       its(:content) { is_expected.to match(/"Dhcp6":/) }
       its(:content) { is_expected.to match(/"subnet6":/) }
+    end
+
+    describe file('/etc/kea/kea-dhcp6-subnets.json') do
+      it { is_expected.to be_file }
+      its(:content) { is_expected.to match(/  <\?include \"\/etc\/kea\/subnets6.d\/2001_db8_1___64.json\"\?>/) }
+    end
+
+    describe file('/etc/kea/subnets6.d/2001_db8_1___64.json') do
+      it { is_expected.to be_file }
       its(:content) { is_expected.to match(/2001:db8:1::\/64/) }
     end
 
@@ -147,8 +165,8 @@ describe 'kea class' do
             'ddns_domains' => [
               {
                 'name'        => 'example.com.',
-                'dns_servers' => [
-                  { 'ip_address' => '127.0.0.1', 'port' => 53 }
+                'dns-servers' => [
+                  { 'ip-address' => '127.0.0.1', 'port' => 53 }
                 ]
               }
             ]

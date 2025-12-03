@@ -21,6 +21,4 @@ group :acceptance do
   gem 'beaker-puppet'
   gem 'beaker-rspec'
   gem 'beaker-docker'
-  gem 'beaker-puppet_install_helper'
-  gem 'beaker-module_install_helper'
 end

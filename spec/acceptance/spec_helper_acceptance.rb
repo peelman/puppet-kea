@@ -2,27 +2,36 @@
 
 require 'beaker-rspec'
 require 'beaker-puppet'
-require 'beaker-puppet_install_helper'
-require 'beaker-module_install_helper'
 
-# Install Puppet agent on all hosts
-run_puppet_install_helper unless ENV['BEAKER_provision'] == 'no'
+# Include the BeakerPuppet DSL for install_puppet_on, copy_module_to, etc.
+include BeakerPuppet
 
 RSpec.configure do |c|
   c.formatter = :documentation
 
   # Configure all nodes in nodeset
   c.before :suite do
-    # Install required packages for systemd in Docker
+    # Install Puppet agent on all hosts
     hosts.each do |host|
-      on host, 'apt-get update && apt-get install -y systemd systemd-sysv curl gnupg'
+      # Install required packages for systemd and Puppet installation
+      on host, 'apt-get update && apt-get install -y systemd systemd-sysv curl gnupg wget'
+
+      # Install Puppet agent from Puppetlabs repo (puppet8 for apt 10+ compatibility)
+      install_puppet_agent_on(host, puppet_collection: 'puppet8')
+
+      # Add puppet paths to the environment
+      host[:type] = 'aio'
+      add_aio_defaults_on(host)
+      add_puppet_paths_on(host)
     end
 
     # Copy module to hosts
-    install_module_on(hosts)
+    copy_module_to(hosts, source: '.', module_name: 'kea')
 
-    # Install dependencies from metadata.json
-    install_module_dependencies_on(hosts)
+    # Install dependencies from Puppet Forge
+    # apt >= 10.0.0 is required for DEB822 format (latest version will be installed)
+    on hosts, puppet('module', 'install', 'puppetlabs-apt')
+    on hosts, puppet('module', 'install', 'puppetlabs-stdlib')
   end
 end
 

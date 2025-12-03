@@ -77,7 +77,7 @@ class kea (
 
   # Directory configuration
   Stdlib::Absolutepath $config_dir         = '/etc/kea',
-  Stdlib::Absolutepath $run_dir            = '/run/kea',
+  Stdlib::Absolutepath $run_dir            = '/var/run/kea',
   Stdlib::Absolutepath $log_dir            = '/var/log/kea',
   Stdlib::Absolutepath $lib_dir            = '/var/lib/kea',
 ) {
@@ -94,12 +94,33 @@ class kea (
   # Install common package (required by all components)
   contain kea::install
 
-  # Ensure directories exist
-  file { [$config_dir, $run_dir, $log_dir, $lib_dir]:
+  # Ensure directories exist with Kea 3.0 required permissions
+  file { $config_dir:
     ensure => directory,
-    owner  => 'root',
-    group  => 'root',
-    mode   => '0755',
+    owner  => '_kea',
+    group  => '_kea',
+    mode   => '0750',
+  }
+
+  file { $run_dir:
+    ensure => directory,
+    owner  => '_kea',
+    group  => '_kea',
+    mode   => '0750',
+  }
+
+  file { $log_dir:
+    ensure => directory,
+    owner  => '_kea',
+    group  => '_kea',
+    mode   => '0750',
+  }
+
+  file { $lib_dir:
+    ensure => directory,
+    owner  => '_kea',
+    group  => '_kea',
+    mode   => '0750',
   }
 
   # Configure components based on provided hashes

@@ -28,7 +28,7 @@ describe 'kea' do
 
         # Default directories
         it { is_expected.to contain_file('/etc/kea').with_ensure('directory') }
-        it { is_expected.to contain_file('/run/kea').with_ensure('directory') }
+        it { is_expected.to contain_file('/var/run/kea').with_ensure('directory') }
         it { is_expected.to contain_file('/var/log/kea').with_ensure('directory') }
         it { is_expected.to contain_file('/var/lib/kea').with_ensure('directory') }
       end

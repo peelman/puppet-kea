@@ -18,7 +18,7 @@ kea::postgresql_backend: false
 
 # Standard directories
 kea::config_dir: '/etc/kea'
-kea::run_dir: '/run/kea'
+kea::run_dir: '/var/run/kea'
 kea::log_dir: '/var/log/kea'
 kea::lib_dir: '/var/lib/kea'
 
@@ -53,6 +53,6 @@ kea::lib_dir: '/var/lib/kea'
 #   forward_ddns:
 #     ddns_domains:
 #       - name: 'example.com.'
-#         dns_servers:
-#           - ip_address: '192.168.1.1'
+#         dns-servers:
+#           - ip-address: '192.168.1.1'
 #             port: 53

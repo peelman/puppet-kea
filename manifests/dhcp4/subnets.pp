@@ -32,17 +32,28 @@ class kea::dhcp4::subnets {
     require => File[$kea::config_dir],
   }
 
+  # Get subnets from the class parameter (passed as array)
+  # Convert array to hash keyed by subnet CIDR for consistency
+  $param_subnets_array = pick($kea::dhcp4['subnets'], [])
+  $param_subnets = $param_subnets_array.reduce({}) |$memo, $subnet| {
+    $key = $subnet['subnet']
+    $memo + { $key => $subnet }
+  }
+
   # Lookup subnets from Hiera with hash merge strategy
   # This allows subnets to be defined at any level of the hierarchy
   # and merged together
   $hiera_subnets = lookup('kea::dhcp4::subnets', Hash, 'deep', {})
 
+  # Merge both sources - param subnets take precedence
+  $all_subnets = $hiera_subnets + $param_subnets
+
   # Get sorted subnet names for consistent ordering
-  $subnet_names = $hiera_subnets.keys.sort
+  $subnet_names = $all_subnets.keys.sort
 
   # Create individual subnet files and collect include directives
   $subnet_names.each |String $name| {
-    $config = $hiera_subnets[$name]
+    $config = $all_subnets[$name]
 
     # Generate a stable ID from the name if not provided
     # Using fqdn_rand with the subnet name as seed for consistency
