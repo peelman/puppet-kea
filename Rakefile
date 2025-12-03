@@ -9,10 +9,12 @@ require 'metadata-json-lint/rake_task'
 PuppetLint.configuration.send('disable_80chars')
 PuppetLint.configuration.send('disable_140chars')
 PuppetLint.configuration.relative_pattern = ['manifests/**/*.pp']
-PuppetLint.configuration.ignore_paths = ['spec/**/*.pp', 'pkg/**/*.pp']
+# Exclude spec fixtures, packaged files and any vendored/bundled gems so linting
+# doesn't scan gem fixtures under vendor/bundle which caused the CI failures.
+PuppetLint.configuration.ignore_paths = ['spec/**/*.pp', 'pkg/**/*.pp', 'vendor/**/*', '.bundle/**/*']
 
-# Puppet Syntax configuration
-PuppetSyntax.exclude_paths = ['spec/**/*', 'pkg/**/*']
+# Puppet Syntax configuration - exclude the same vendored paths
+PuppetSyntax.exclude_paths = ['spec/**/*', 'pkg/**/*', 'vendor/**/*', '.bundle/**/*']
 
 desc 'Run all validation and tests'
 task default: [:validate, :lint, :metadata_lint, :spec]
