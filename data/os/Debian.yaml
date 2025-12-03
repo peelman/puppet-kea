@@ -1,0 +1,5 @@
+---
+# Debian-family specific defaults
+# These are used for both Debian and Ubuntu
+# Empty hash to satisfy Hiera lookup requirements
+kea::os_specific_placeholder: true

@@ -1,0 +1,33 @@
+# Ignore bundler artifacts
+.bundle/
+vendor/
+
+# Ignore test artifacts
+spec/fixtures/modules/
+spec/fixtures/manifests/
+coverage/
+.rspec_status
+
+# Ignore build artifacts
+pkg/
+*.gem
+Gemfile.lock
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Ruby files
+.ruby-version
+.ruby-gemset
+
+# Puppet development kit
+.pdk/
+.yardoc/

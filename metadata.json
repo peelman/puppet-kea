@@ -1,0 +1,52 @@
+{
+  "name": "peelman-kea",
+  "version": "1.0.0",
+  "author": "Nick Peelman",
+  "summary": "Manages ISC Kea DHCP server installation and configuration",
+  "license": "Apache-2.0",
+  "source": "https://github.com/peelman/puppet-kea",
+  "project_page": "https://github.com/peelman/puppet-kea",
+  "issues_url": "https://github.com/peelman/puppet-kea/issues",
+  "dependencies": [
+    {
+      "name": "puppetlabs/stdlib",
+      "version_requirement": ">= 6.0.0 < 10.0.0"
+    },
+    {
+      "name": "puppetlabs/apt",
+      "version_requirement": ">= 7.0.0 < 10.0.0"
+    }
+  ],
+  "operatingsystem_support": [
+    {
+      "operatingsystem": "Debian",
+      "operatingsystemrelease": [
+        "11",
+        "12"
+      ]
+    },
+    {
+      "operatingsystem": "Ubuntu",
+      "operatingsystemrelease": [
+        "20.04",
+        "22.04",
+        "24.04"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "name": "puppet",
+      "version_requirement": ">= 7.0.0 < 9.0.0"
+    }
+  ],
+  "tags": [
+    "dhcp",
+    "kea",
+    "isc",
+    "network",
+    "dhcpv4",
+    "dhcpv6",
+    "ddns"
+  ]
+}

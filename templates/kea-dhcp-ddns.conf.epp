@@ -1,0 +1,92 @@
+<%- |
+Hash                 $config,
+Stdlib::Absolutepath $config_dir,
+Stdlib::Absolutepath $run_dir,
+Stdlib::Absolutepath $log_dir,
+Stdlib::Absolutepath $lib_dir,
+| -%>
+
+<%
+#lint:ignore:double_quoted_strings lint:ignore:strict_indent lint:ignore:comment_found lint:ignore:variables_not_enclosed lint:ignore:trailing_comma lint:ignore:140chars lint:ignore:manifest_whitespace_opening_brace_before
+
+# Extract DDNS settings with defaults
+$ip_address = pick($config['ip_address'], '127.0.0.1')
+$port = pick($config['port'], 53001)
+$dns_server_timeout = pick($config['dns_server_timeout'], 500)
+$ncr_protocol = pick($config['ncr_protocol'], 'UDP')
+$ncr_format = pick($config['ncr_format'], 'JSON')
+
+# Forward DDNS configuration
+$forward_ddns = pick($config['forward_ddns'], {})
+$forward_ddns_domains = pick($forward_ddns['ddns_domains'], [])
+
+# Reverse DDNS configuration
+$reverse_ddns = pick($config['reverse_ddns'], {})
+$reverse_ddns_domains = pick($reverse_ddns['ddns_domains'], [])
+
+# TSIG keys
+$tsig_keys = pick($config['tsig_keys'], [])
+
+# Control socket
+$control_socket_enable = pick($config.dig('control_socket', 'enable'), true)
+$control_socket_path = pick($config.dig('control_socket', 'path'), "${run_dir}/kea-ddns-ctrl.sock")
+
+# Logging configuration
+$log_severity = pick($config.dig('logging', 'severity'), 'INFO')
+$log_output = pick($config.dig('logging', 'output'), "${log_dir}/kea-dhcp-ddns.log")
+-%>
+{
+    "DhcpDdns": {
+        "ip-address": "<%= $ip_address %>",
+        "port": <%= $port %>,
+        "dns-server-timeout": <%= $dns_server_timeout %>,
+        "ncr-protocol": "<%= $ncr_protocol %>",
+        "ncr-format": "<%= $ncr_format %>",
+
+        "control-socket": {
+<%- if $control_socket_enable { -%>
+            "socket-type": "unix",
+            "socket-name": "<%= $control_socket_path %>"
+<%- } -%>
+        },
+
+<%- if !$tsig_keys.empty { -%>
+        "tsig-keys": <%= stdlib::to_json($tsig_keys) %>,
+
+<%- } -%>
+        "forward-ddns": {
+<%- if !$forward_ddns_domains.empty { -%>
+            "ddns-domains": <%= stdlib::to_json($forward_ddns_domains) %>
+<%- } else { -%>
+            "ddns-domains": []
+<%- } -%>
+        },
+
+        "reverse-ddns": {
+<%- if !$reverse_ddns_domains.empty { -%>
+            "ddns-domains": <%= stdlib::to_json($reverse_ddns_domains) %>
+<%- } else { -%>
+            "ddns-domains": []
+<%- } -%>
+        },
+
+        "loggers": [
+            {
+                "name": "kea-dhcp-ddns",
+                "output-options": [
+                    {
+                        "output": "<%= $log_output %>",
+                        "flush": true,
+                        "maxsize": <%= pick($config.dig('logging', 'maxsize'), 10485760) %>,
+                        "maxver": <%= pick($config.dig('logging', 'maxver'), 8) %>
+                    }
+                ],
+                "severity": "<%= $log_severity %>",
+                "debuglevel": <%= pick($config.dig('logging', 'debuglevel'), 0) %>
+            }
+        ]
+    }
+}
+<%-
+#lint:endignore 
+-%>

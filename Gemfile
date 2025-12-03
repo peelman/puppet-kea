@@ -1,0 +1,26 @@
+# frozen_string_literal: true
+
+source 'https://rubygems.org'
+
+gem 'puppet', ENV.fetch('PUPPET_GEM_VERSION', '>= 7.0'), require: false
+gem 'facterdb', require: false
+
+group :development, :test do
+  gem 'rake'
+  gem 'rspec'
+  gem 'rspec-puppet', '~> 4.0'
+  gem 'rspec-puppet-facts'
+  gem 'puppetlabs_spec_helper', '>= 7.0'
+  gem 'metadata-json-lint'
+  gem 'puppet-lint'
+  gem 'puppet-syntax'
+  gem 'simplecov', require: false
+  gem 'simplecov-console', require: false
+end
+
+group :acceptance do
+  gem 'beaker'
+  gem 'beaker-puppet'
+  gem 'beaker-rspec'
+  gem 'beaker-docker'
+end

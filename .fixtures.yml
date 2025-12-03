@@ -1,0 +1,10 @@
+fixtures:
+  forge_modules:
+    stdlib:
+      repo: puppetlabs/stdlib
+      ref: "9.0.0"
+    apt:
+      repo: puppetlabs/apt
+      ref: "10.0.1"
+  symlinks:
+    kea: "#{source_dir}"

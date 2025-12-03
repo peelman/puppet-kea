@@ -1,0 +1,58 @@
+---
+# kea module default configuration
+#
+# These defaults can be overridden in your control repository's Hiera data.
+
+# Repository version - defaults to current LTS
+kea::repo_version: '3-0'
+
+# Manage the Cloudsmith repository
+kea::manage_repo: true
+
+# Install open source hooks package by default
+kea::hooks_package: true
+
+# Database backends - disabled by default (uses memfile)
+kea::mysql_backend: false
+kea::postgresql_backend: false
+
+# Standard directories
+kea::config_dir: '/etc/kea'
+kea::run_dir: '/run/kea'
+kea::log_dir: '/var/log/kea'
+kea::lib_dir: '/var/lib/kea'
+
+# DHCPv4 - disabled by default, enable via node/role hiera
+# kea::dhcp4:
+#   enable: true
+#   interfaces:
+#     - 'eth0'
+#   valid_lifetime: 4000
+#   renew_timer: 1000
+#   rebind_timer: 2000
+#   subnets:
+#     - id: 1
+#       subnet: '192.168.1.0/24'
+#       pools:
+#         - pool: '192.168.1.100 - 192.168.1.200'
+#       option-data:
+#         - name: 'routers'
+#           data: '192.168.1.1'
+#         - name: 'domain-name-servers'
+#           data: '192.168.1.1'
+
+# DHCPv6 - disabled by default
+# kea::dhcp6:
+#   enable: true
+#   interfaces:
+#     - 'eth0'
+
+# DDNS - disabled by default
+# kea::ddns:
+#   enable: true
+#   forward_ddns:
+#     ddns_domains:
+#       - name: 'example.com.'
+#         dns_servers:
+#           - ip_address: '192.168.1.1'
+#             port: 53

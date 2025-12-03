@@ -1,0 +1,203 @@
+<%- |
+Hash                 $config,
+Stdlib::Absolutepath $config_dir,
+Stdlib::Absolutepath $run_dir,
+Stdlib::Absolutepath $log_dir,
+Stdlib::Absolutepath $lib_dir,
+| -%>
+<%
+#lint:ignore:double_quoted_strings lint:ignore:strict_indent lint:ignore:comment_found lint:ignore:variables_not_enclosed lint:ignore:trailing_comma lint:ignore:140chars lint:ignore:manifest_whitespace_opening_brace_before
+
+# Kea DHCPv4 Configuration Template
+#
+#  This template generates a JSON configuration file for kea-dhcp4.
+#  Configuration is driven by Hiera data passed through the $config hash.
+# Key configuration sections:
+# - interfaces: List of interfaces to listen on
+# - subnets: Array of subnet definitions with pools and options
+# - reservations: Host reservations (can be global or per-subnet)
+# - option_data: DHCP options to send to clients
+# - hooks_libraries: Hook libraries to load
+# - lease_database: Lease storage configuration
+# - logging: Logging configuration
+-%>
+<%
+# Helper to convert Ruby/Puppet values to JSON
+# Using stdlib's to_json_pretty would be ideal but we'll build manually for control
+
+# Extract common settings with defaults
+$interfaces = pick($config['interfaces'], ['*'])
+$valid_lifetime = pick($config['valid_lifetime'], 4000)
+$renew_timer = pick($config['renew_timer'], 1000)
+$rebind_timer = pick($config['rebind_timer'], 2000)
+$subnets = pick($config['subnets'], [])
+$option_data = pick($config['option_data'], [])
+$hooks_libraries = pick($config['hooks_libraries'], [])
+$reservations = pick($config['reservations'], [])
+$client_classes = pick($config['client_classes'], [])
+$host_reservation_identifiers = pick($config['host_reservation_identifiers'], ['hw-address', 'duid', 'circuit-id', 'client-id'])
+
+# Lease database configuration
+$lease_database_type = pick($config.dig('lease_database', 'type'), 'memfile')
+$lease_database_name = pick($config.dig('lease_database', 'name'), "${lib_dir}/kea-leases4.csv")
+$lease_database_lfc_interval = pick($config.dig('lease_database', 'lfc_interval'), 3600)
+
+# Logging configuration
+$log_severity = pick($config.dig('logging', 'severity'), 'INFO')
+$log_output = pick($config.dig('logging', 'output'), "${log_dir}/kea-dhcp4.log")
+
+# DDNS settings
+$ddns_enable = $config['ddns_send_updates'] ? { undef => false, default => $config['ddns_send_updates'] }
+$ddns_override_no_update = $config['ddns_override_no_update'] ? { undef => false, default => $config['ddns_override_no_update'] }
+$ddns_override_client_update = $config['ddns_override_client_update'] ? { undef => false, default => $config['ddns_override_client_update'] }
+$ddns_replace_client_name = $config['ddns_replace_client_name'] ? { undef => 'never', default => $config['ddns_replace_client_name'] }
+$ddns_qualifying_suffix = $config['ddns_qualifying_suffix'] ? { undef => '', default => $config['ddns_qualifying_suffix'] }
+
+# Control socket for management
+$control_socket_enable = pick($config.dig('control_socket', 'enable'), true)
+$control_socket_path = pick($config.dig('control_socket', 'path'), "${run_dir}/kea-dhcp4-ctrl.sock")
+
+# Expired leases processing
+$expired_leases_processing = $config['expired_leases_processing']
+
+# Sanity checks
+$sanity_checks = $config['sanity_checks']
+
+# Additional global settings
+$store_extended_info = $config['store_extended_info']
+$calculate_tee_times = $config['calculate_tee_times']
+$t1_percent = $config['t1_percent']
+$t2_percent = $config['t2_percent']
+$allocator = $config['allocator']
+-%>
+{
+    "Dhcp4": {
+        "interfaces-config": {
+            "interfaces": <%= stdlib::to_json($interfaces) %>
+        },
+
+        "control-socket": {
+<%- if $control_socket_enable { -%>
+            "socket-type": "unix",
+            "socket-name": "<%= $control_socket_path %>"
+<%- } -%>
+        },
+
+        "lease-database": {
+            "type": "<%= $lease_database_type %>",
+<%- if $lease_database_type == 'memfile' { -%>
+            "persist": true,
+            "name": "<%= $lease_database_name %>",
+            "lfc-interval": <%= $lease_database_lfc_interval %>
+<%- } elsif $lease_database_type == 'mysql' { -%>
+            "name": "<%= $config.dig('lease_database', 'name') ? { undef => 'kea', default => $config.dig('lease_database', 'name') } %>",
+            "host": "<%= $config.dig('lease_database', 'host') ? { undef => 'localhost', default => $config.dig('lease_database', 'host') } %>",
+            "port": <%= $config.dig('lease_database', 'port') ? { undef => 3306, default => $config.dig('lease_database', 'port') } %>,
+            "user": "<%= $config.dig('lease_database', 'user') ? { undef => 'kea', default => $config.dig('lease_database', 'user') } %>",
+            "password": "<%= $config.dig('lease_database', 'password') ? { undef => '', default => $config.dig('lease_database', 'password') } %>"
+<%- } elsif $lease_database_type == 'postgresql' { -%>
+            "name": "<%= $config.dig('lease_database', 'name') ? { undef => 'kea', default => $config.dig('lease_database', 'name') } %>",
+            "host": "<%= $config.dig('lease_database', 'host') ? { undef => 'localhost', default => $config.dig('lease_database', 'host') } %>",
+            "port": <%= $config.dig('lease_database', 'port') ? { undef => 5432, default => $config.dig('lease_database', 'port') } %>,
+            "user": "<%= $config.dig('lease_database', 'user') ? { undef => 'kea', default => $config.dig('lease_database', 'user') } %>",
+            "password": "<%= $config.dig('lease_database', 'password') ? { undef => '', default => $config.dig('lease_database', 'password') } %>"
+<%- } -%>
+        },
+
+        "valid-lifetime": <%= $valid_lifetime %>,
+        "renew-timer": <%= $renew_timer %>,
+        "rebind-timer": <%= $rebind_timer %>,
+<%- if $calculate_tee_times != undef { -%>
+        "calculate-tee-times": <%= $calculate_tee_times %>,
+<%- } -%>
+<%- if $t1_percent != undef { -%>
+        "t1-percent": <%= $t1_percent %>,
+<%- } -%>
+<%- if $t2_percent != undef { -%>
+        "t2-percent": <%= $t2_percent %>,
+<%- } -%>
+<%- if $store_extended_info != undef { -%>
+        "store-extended-info": <%= $store_extended_info %>,
+<%- } -%>
+<%- if $allocator != undef { -%>
+        "allocator": "<%= $allocator %>",
+<%- } -%>
+
+        "host-reservation-identifiers": <%= stdlib::to_json($host_reservation_identifiers) %>,
+
+<%- if $sanity_checks != undef { -%>
+        "sanity-checks": {
+            "lease-checks": "<%= pick($sanity_checks['lease_checks'], 'warn') %>"
+        },
+
+<%- } -%>
+<%- if $expired_leases_processing != undef { -%>
+        "expired-leases-processing": {
+            "reclaim-timer-wait-time": <%= pick($expired_leases_processing['reclaim_timer_wait_time'], 10) %>,
+            "flush-reclaimed-timer-wait-time": <%= pick($expired_leases_processing['flush_reclaimed_timer_wait_time'], 25) %>,
+            "hold-reclaimed-time": <%= pick($expired_leases_processing['hold_reclaimed_time'], 3600) %>,
+            "max-reclaim-leases": <%= pick($expired_leases_processing['max_reclaim_leases'], 100) %>,
+            "max-reclaim-time": <%= pick($expired_leases_processing['max_reclaim_time'], 250) %>,
+            "unwarned-reclaim-cycles": <%= pick($expired_leases_processing['unwarned_reclaim_cycles'], 5) %>
+        },
+
+<%- } -%>
+
+<%- if $ddns_enable { -%>
+        "dhcp-ddns": {
+            "enable-updates": true,
+            "server-ip": "<%= $config['ddns_server_ip'] ? { undef => '127.0.0.1', default => $config['ddns_server_ip'] } %>",
+            "server-port": <%= $config['ddns_server_port'] ? { undef => 53001, default => $config['ddns_server_port'] } %>,
+            "sender-ip": "<%= $config['ddns_sender_ip'] ? { undef => '', default => $config['ddns_sender_ip'] } %>",
+            "sender-port": <%= $config['ddns_sender_port'] ? { undef => 0, default => $config['ddns_sender_port'] } %>,
+            "max-queue-size": <%= $config['ddns_max_queue_size'] ? { undef => 1024, default => $config['ddns_max_queue_size'] } %>,
+            "ncr-protocol": "<%= $config['ddns_ncr_protocol'] ? { undef => 'UDP', default => $config['ddns_ncr_protocol'] } %>",
+            "ncr-format": "<%= $config['ddns_ncr_format'] ? { undef => 'JSON', default => $config['ddns_ncr_format'] } %>"
+        },
+        "ddns-send-updates": true,
+        "ddns-override-no-update": <%= $ddns_override_no_update %>,
+        "ddns-override-client-update": <%= $ddns_override_client_update %>,
+        "ddns-replace-client-name": "<%= $ddns_replace_client_name %>",
+<%- if $ddns_qualifying_suffix != '' { -%>
+        "ddns-qualifying-suffix": "<%= $ddns_qualifying_suffix %>",
+<%- } -%>
+
+<%- } -%>
+<%- if !$option_data.empty { -%>
+        "option-data": <%= stdlib::to_json($option_data) %>,
+
+<%- } -%>
+<%- if !$client_classes.empty { -%>
+        "client-classes": <%= stdlib::to_json($client_classes) %>,
+
+<%- } -%>
+<%- if !$hooks_libraries.empty { -%>
+        "hooks-libraries": <%= stdlib::to_json($hooks_libraries) %>,
+
+<%- } -%>
+<%- if !$reservations.empty { -%>
+        "reservations": <%= stdlib::to_json($reservations) %>,
+
+<%- } -%>
+        "subnet4": <?include "<%= $config_dir %>/kea-dhcp4-subnets.json"?>,
+
+        "loggers": [
+            {
+                "name": "kea-dhcp4",
+                "output-options": [
+                    {
+                        "output": "<%= $log_output %>",
+                        "flush": true,
+                        "maxsize": <%= pick($config.dig('logging', 'maxsize'), 10485760) %>,
+                        "maxver": <%= pick($config.dig('logging', 'maxver'), 8) %>
+                    }
+                ],
+                "severity": "<%= $log_severity %>",
+                "debuglevel": <%= pick($config.dig('logging', 'debuglevel'), 0) %>
+            }
+        ]
+    }
+}
+<%
+#lint:endignore
+-%>
