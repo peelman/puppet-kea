@@ -578,8 +578,8 @@ describe 'kea class' do
             'ddns_domains' => [
               {
                 'name'        => 'internal.example.com.',
-                'dns_servers' => [
-                  { 'ip_address' => '127.0.0.1', 'port' => 53 }
+                'dns-servers' => [
+                  { 'ip-address' => '127.0.0.1', 'port' => 53 }
                 ],
               },
             ],
@@ -588,8 +588,8 @@ describe 'kea class' do
             'ddns_domains' => [
               {
                 'name'        => '16.172.in-addr.arpa.',
-                'dns_servers' => [
-                  { 'ip_address' => '127.0.0.1', 'port' => 53 }
+                'dns-servers' => [
+                  { 'ip-address' => '127.0.0.1', 'port' => 53 }
                 ],
               },
             ],
