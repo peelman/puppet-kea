@@ -398,56 +398,22 @@ describe 'kea class' do
     end
   end
 
-  context 'with shared networks' do
+  context 'with shared networks infrastructure' do
+    # This test verifies that the shared networks directories and include files
+    # are created by the module. Actual shared network content is configured via Hiera.
     let(:manifest) do
       <<-PUPPET
       class { 'kea':
         dhcp4 => {
           'enable'     => true,
           'interfaces' => ['eth0'],
+          'subnets'    => [
+            {
+              'subnet' => '192.168.50.0/24',
+              'pools'  => [{ 'pool' => '192.168.50.100 - 192.168.50.200' }],
+            },
+          ],
         },
-      }
-
-      # Shared networks via Hiera simulation - use class resource
-      file { '/etc/kea/shared-networks4.d/campus-building-a.json':
-        ensure  => file,
-        owner   => 'root',
-        group   => 'root',
-        mode    => '0644',
-        content => '{
-  "name": "campus-building-a",
-  "interface": "eth0",
-  "subnet4": [
-    {
-      "id": 100,
-      "subnet": "192.168.10.0/24",
-      "pools": [{ "pool": "192.168.10.100 - 192.168.10.200" }],
-      "option-data": [{ "name": "routers", "data": "192.168.10.1" }]
-    },
-    {
-      "id": 101,
-      "subnet": "192.168.11.0/24",
-      "pools": [{ "pool": "192.168.11.100 - 192.168.11.200" }],
-      "option-data": [{ "name": "routers", "data": "192.168.11.1" }]
-    }
-  ]
-}',
-        require => File['/etc/kea/shared-networks4.d'],
-        notify  => Service['isc-kea-dhcp4-server'],
-      }
-
-      # Update shared networks include file
-      file { '/etc/kea/kea-dhcp4-shared-networks.json':
-        ensure  => file,
-        owner   => 'root',
-        group   => 'root',
-        mode    => '0644',
-        content => '[
-  <?include "/etc/kea/shared-networks4.d/campus-building-a.json"?>
-]
-',
-        require => File['/etc/kea/shared-networks4.d/campus-building-a.json'],
-        notify  => Service['isc-kea-dhcp4-server'],
       }
       PUPPET
     end
@@ -459,18 +425,15 @@ describe 'kea class' do
 
     describe file('/etc/kea/shared-networks4.d') do
       it { is_expected.to be_directory }
-    end
-
-    describe file('/etc/kea/shared-networks4.d/campus-building-a.json') do
-      it { is_expected.to be_file }
-      its(:content) { is_expected.to match(/"name": "campus-building-a"/) }
-      its(:content) { is_expected.to match(/192\.168\.10\.0\/24/) }
-      its(:content) { is_expected.to match(/192\.168\.11\.0\/24/) }
+      it { is_expected.to be_owned_by 'root' }
+      it { is_expected.to be_mode '755' }
     end
 
     describe file('/etc/kea/kea-dhcp4-shared-networks.json') do
       it { is_expected.to be_file }
-      its(:content) { is_expected.to match(/campus-building-a\.json/) }
+      it { is_expected.to be_owned_by 'root' }
+      # Empty array when no shared networks configured
+      its(:content) { is_expected.to match(/^\[\s*\]$/m) }
     end
 
     describe 'kea-dhcp4 config syntax' do
