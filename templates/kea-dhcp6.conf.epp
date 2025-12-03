@@ -168,6 +168,8 @@ $pd_allocator = $config['pd_allocator']
         "reservations": <%= stdlib::to_json($reservations) %>,
 
 <%- } -%>
+        "shared-networks": <?include "<%= $config_dir %>/kea-dhcp6-shared-networks.json"?>,
+
         "subnet6": <?include "<%= $config_dir %>/kea-dhcp6-subnets.json"?>,
 
         "loggers": [

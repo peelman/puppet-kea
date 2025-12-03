@@ -179,6 +179,8 @@ $allocator = $config['allocator']
         "reservations": <%= stdlib::to_json($reservations) %>,
 
 <%- } -%>
+        "shared-networks": <?include "<%= $config_dir %>/kea-dhcp4-shared-networks.json"?>,
+
         "subnet4": <?include "<%= $config_dir %>/kea-dhcp4-subnets.json"?>,
 
         "loggers": [
