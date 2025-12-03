@@ -119,7 +119,7 @@ jobs:
           bundler-cache: true
 
       - name: Install dependencies
-        run: bundle install
+        run: bundle install --with acceptance
 
       - name: Run acceptance tests
         run: bundle exec rake beaker:${{ matrix.nodeset }}
