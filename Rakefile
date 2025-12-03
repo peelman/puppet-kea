@@ -6,6 +6,13 @@ require 'puppet-lint/tasks/puppet-lint'
 require 'puppet-syntax/tasks/puppet-syntax'
 require 'metadata-json-lint/rake_task'
 
+# Load Blacksmith tasks for Forge publishing
+begin
+  require 'puppet_blacksmith/rake_tasks'
+rescue LoadError
+  # Blacksmith not installed - skip release tasks
+end
+
 # Load Beaker tasks if gems are available
 begin
   require 'beaker-rspec/rake_task'

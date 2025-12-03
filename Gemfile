@@ -22,3 +22,7 @@ group :acceptance do
   gem 'beaker-rspec'
   gem 'beaker-docker'
 end
+
+group :release do
+  gem 'puppet-blacksmith'
+end

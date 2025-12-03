@@ -145,8 +145,8 @@ jobs:
 
       - name: Install dependencies
         run: |
+          bundle config set --local with 'release'
           bundle install
-          gem install puppet-blacksmith
 
       - name: Build and publish to Forge
         run: bundle exec rake module:push
