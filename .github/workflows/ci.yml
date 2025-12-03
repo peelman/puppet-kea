@@ -148,10 +148,7 @@ jobs:
           bundle install
           gem install puppet-blacksmith
 
-      - name: Build module
-        run: bundle exec rake build
-
-      - name: Publish to Forge
+      - name: Build and publish to Forge
         run: bundle exec rake module:push
         env:
           BLACKSMITH_FORGE_URL: https://forgeapi.puppet.com
