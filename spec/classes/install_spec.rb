@@ -28,6 +28,12 @@ describe 'kea::install' do
           )
         end
 
+        it do
+          is_expected.to contain_package('isc-kea-admin').with(
+            'ensure' => 'installed',
+          )
+        end
+
         # Default: no MySQL or PostgreSQL
         it { is_expected.not_to contain_package('isc-kea-mysql') }
         it { is_expected.not_to contain_package('isc-kea-pgsql') }

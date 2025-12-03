@@ -25,6 +25,12 @@ describe 'kea' do
         it { is_expected.to contain_package('isc-kea-hooks').with_ensure('installed') }
         it { is_expected.not_to contain_package('isc-kea-mysql') }
         it { is_expected.not_to contain_package('isc-kea-pgsql') }
+
+        # Default directories
+        it { is_expected.to contain_file('/etc/kea').with_ensure('directory') }
+        it { is_expected.to contain_file('/run/kea').with_ensure('directory') }
+        it { is_expected.to contain_file('/var/log/kea').with_ensure('directory') }
+        it { is_expected.to contain_file('/var/lib/kea').with_ensure('directory') }
       end
 
       context 'with manage_repo disabled' do
@@ -74,6 +80,10 @@ describe 'kea' do
         end
 
         it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_file('/opt/kea/etc').with_ensure('directory') }
+        it { is_expected.to contain_file('/opt/kea/run').with_ensure('directory') }
+        it { is_expected.to contain_file('/opt/kea/log').with_ensure('directory') }
+        it { is_expected.to contain_file('/opt/kea/lib').with_ensure('directory') }
       end
 
       context 'with dhcp4 enabled' do
