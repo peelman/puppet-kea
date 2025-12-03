@@ -27,15 +27,12 @@ jobs:
 
       - name: Install dependencies
         run: bundle install
-        working-directory: modules/kea
 
       - name: Run puppet-lint
         run: bundle exec rake lint
-        working-directory: modules/kea
 
       - name: Check metadata.json
         run: bundle exec rake metadata_lint
-        working-directory: modules/kea
 
   syntax:
     name: Syntax
@@ -57,13 +54,11 @@ jobs:
 
       - name: Install dependencies
         run: bundle install
-        working-directory: modules/kea
         env:
           PUPPET_GEM_VERSION: "~> ${{ matrix.puppet }}"
 
       - name: Validate syntax
         run: bundle exec rake syntax
-        working-directory: modules/kea
         env:
           PUPPET_GEM_VERSION: "~> ${{ matrix.puppet }}"
 
@@ -95,13 +90,11 @@ jobs:
 
       - name: Install dependencies
         run: bundle install
-        working-directory: modules/kea
         env:
           PUPPET_GEM_VERSION: "~> ${{ matrix.puppet }}"
 
       - name: Run RSpec tests
         run: bundle exec rake spec
-        working-directory: modules/kea
         env:
           PUPPET_GEM_VERSION: "~> ${{ matrix.puppet }}"
 
@@ -121,18 +114,16 @@ jobs:
 
       - name: Install dependencies
         run: bundle install
-        working-directory: modules/kea
 
       - name: Run tests with coverage
         run: bundle exec rake spec
-        working-directory: modules/kea
         env:
           COVERAGE: 'yes'
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: modules/kea/coverage/.resultset.json
+          files: coverage/.resultset.json
           fail_ci_if_error: false
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -156,11 +147,9 @@ jobs:
         run: |
           gem install puppet-blacksmith
           rake build
-        working-directory: modules/kea
 
       - name: Publish to Forge
         run: rake module:push
-        working-directory: modules/kea
         env:
           BLACKSMITH_FORGE_URL: https://forgeapi.puppet.com
           BLACKSMITH_FORGE_USERNAME: ${{ secrets.FORGE_USERNAME }}
