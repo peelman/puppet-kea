@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'spec_helper_acceptance'
+require_relative 'spec_helper_acceptance'
 
 describe 'kea class' do
   context 'with dhcp4 enabled' do
