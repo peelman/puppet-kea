@@ -5,24 +5,6 @@ require 'rspec-puppet-facts'
 
 include RspecPuppetFacts
 
-# Configure SimpleCov for code coverage
-if ENV['COVERAGE'] == 'yes'
-  require 'simplecov'
-  require 'simplecov-console'
-
-  SimpleCov.start do
-    add_filter '/spec/'
-    add_filter '/vendor/'
-    track_files 'manifests/**/*.pp'
-    enable_coverage :branch
-  end
-
-  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new([
-    SimpleCov::Formatter::HTMLFormatter,
-    SimpleCov::Formatter::Console
-  ])
-end
-
 # Default facts for all tests
 default_facts = {
   puppetversion: Puppet.version,

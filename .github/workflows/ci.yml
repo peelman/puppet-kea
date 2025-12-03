@@ -96,36 +96,6 @@ jobs:
         env:
           PUPPET_GEM_VERSION: "~> ${{ matrix.puppet }}"
 
-  coverage:
-    name: Code Coverage
-    runs-on: ubuntu-latest
-    needs: unit
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          bundler-cache: true
-
-      - name: Install dependencies
-        run: bundle install
-
-      - name: Run tests with coverage
-        run: bundle exec rake spec
-        env:
-          COVERAGE: 'yes'
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: coverage/.resultset.json
-          fail_ci_if_error: false
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
   release:
     name: Release to Puppet Forge
     runs-on: ubuntu-latest

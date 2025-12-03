@@ -14,8 +14,6 @@ group :development, :test do
   gem 'metadata-json-lint'
   gem 'puppet-lint'
   gem 'puppet-syntax'
-  gem 'simplecov', require: false
-  gem 'simplecov-console', require: false
 end
 
 group :acceptance do
