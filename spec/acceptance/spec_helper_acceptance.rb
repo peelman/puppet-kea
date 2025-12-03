@@ -2,8 +2,8 @@
 
 require 'beaker-rspec'
 require 'beaker-puppet'
-require 'beaker/puppet_install_helper'
-require 'beaker/module_install_helper'
+require 'beaker-puppet_install_helper'
+require 'beaker-module_install_helper'
 
 # Install Puppet agent on all hosts
 run_puppet_install_helper unless ENV['BEAKER_provision'] == 'no'
@@ -13,18 +13,16 @@ RSpec.configure do |c|
 
   # Configure all nodes in nodeset
   c.before :suite do
-    # Install module dependencies
+    # Install required packages for systemd in Docker
     hosts.each do |host|
-      # Install required packages for systemd in Docker
       on host, 'apt-get update && apt-get install -y systemd systemd-sysv curl gnupg'
-
-      # Copy module to host
-      copy_module_to(host, source: File.dirname(__dir__) + '/..', module_name: 'kea')
-
-      # Install dependencies from metadata.json
-      on host, puppet('module', 'install', 'puppetlabs-apt', '--version', '>=9.0.0 <11.0.0')
-      on host, puppet('module', 'install', 'puppetlabs-stdlib', '--version', '>=9.0.0 <10.0.0')
     end
+
+    # Copy module to hosts
+    install_module_on(hosts)
+
+    # Install dependencies from metadata.json
+    install_module_dependencies_on(hosts)
   end
 end
 
