@@ -1,0 +1,14 @@
+---
+HOSTS:
+  ubuntu2404:
+    platform: ubuntu-24.04-amd64
+    image: ubuntu:24.04
+    hypervisor: docker
+    docker_cmd: '["/sbin/init"]'
+    docker_preserve_image: true
+    roles:
+      - default
+      - agent
+CONFIG:
+  type: foss
+  log_level: debug

@@ -1,0 +1,14 @@
+---
+HOSTS:
+  debian12:
+    platform: debian-12-amd64
+    image: debian:12
+    hypervisor: docker
+    docker_cmd: '["/sbin/init"]'
+    docker_preserve_image: true
+    roles:
+      - default
+      - agent
+CONFIG:
+  type: foss
+  log_level: debug

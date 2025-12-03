@@ -1,0 +1,14 @@
+---
+HOSTS:
+  ubuntu2204:
+    platform: ubuntu-22.04-amd64
+    image: ubuntu:22.04
+    hypervisor: docker
+    docker_cmd: '["/sbin/init"]'
+    docker_preserve_image: true
+    roles:
+      - default
+      - agent
+CONFIG:
+  type: foss
+  log_level: debug
