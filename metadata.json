@@ -1,6 +1,6 @@
 {
   "name": "peelman-kea",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "author": "Nick Peelman",
   "summary": "Manages ISC Kea DHCP server installation and configuration",
   "license": "Apache-2.0",

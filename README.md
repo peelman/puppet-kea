@@ -356,6 +356,72 @@ DHCPv6 subnets support additional keys:
 | `preferred_lifetime` | Integer | Override preferred lifetime |
 | `rapid_commit` | Boolean | Enable rapid commit for this subnet |
 
+### Shared Networks
+
+Shared networks allow multiple subnets to share a common physical network segment. This is
+useful for scenarios like network migrations, VoIP deployments, or multi-tenant environments.
+
+Each shared network is managed as an individual JSON file in `/etc/kea/shared-networks4.d/`
+(or `shared-networks6.d/` for DHCPv6), using Kea's `<?include?>` directive for clean
+separation.
+
+```yaml
+# DHCPv4 shared networks
+kea::dhcp4::shared_networks:
+  office-floor1:
+    interface: 'eth0'
+    option_data:
+      - name: 'domain-name'
+        data: 'floor1.example.com'
+    subnets:
+      - subnet: '192.168.1.0/24'
+        pools:
+          - pool: '192.168.1.100 - 192.168.1.200'
+        option_data:
+          - name: 'routers'
+            data: '192.168.1.1'
+      - subnet: '192.168.2.0/24'
+        pools:
+          - pool: '192.168.2.100 - 192.168.2.200'
+        option_data:
+          - name: 'routers'
+            data: '192.168.2.1'
+
+  guest-network:
+    interface: 'eth1'
+    subnets:
+      - subnet: '10.0.0.0/24'
+        pools:
+          - pool: '10.0.0.50 - 10.0.0.250'
+        valid_lifetime: 1800
+```
+
+```yaml
+# DHCPv6 shared networks
+kea::dhcp6::shared_networks:
+  office-v6:
+    interface: 'eth0'
+    subnets:
+      - subnet: '2001:db8:1::/64'
+        pools:
+          - pool: '2001:db8:1::100 - 2001:db8:1::1ff'
+      - subnet: '2001:db8:2::/64'
+        pools:
+          - pool: '2001:db8:2::100 - 2001:db8:2::1ff'
+```
+
+Each shared network supports:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `name` | String | Network name (defaults to Hiera key) |
+| `interface` | String | Interface for directly connected networks |
+| `relay` | Hash | Relay agent configuration |
+| `option_data` | Array | DHCP options for all subnets in network |
+| `subnets` | Array | Array of subnet definitions |
+| `valid_lifetime` | Integer | Override valid lifetime for all subnets |
+| `extra_config` | Hash | Additional Kea configuration options |
+
 ## Reference
 
 ### Main Class Parameters
