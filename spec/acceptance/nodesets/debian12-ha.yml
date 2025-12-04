@@ -1,0 +1,34 @@
+---
+# HA (High Availability) test nodeset with two nodes
+# This nodeset runs two Kea servers for HA testing
+HOSTS:
+  primary:
+    platform: debian-12-amd64
+    image: debian:12
+    hypervisor: docker
+    docker_cmd: '["/sbin/init"]'
+    docker_preserve_image: true
+    roles:
+      - default
+      - agent
+      - ha_primary
+    ip: 172.17.0.10
+    docker_network_options:
+      - '--ip=172.17.0.10'
+
+  standby:
+    platform: debian-12-amd64
+    image: debian:12
+    hypervisor: docker
+    docker_cmd: '["/sbin/init"]'
+    docker_preserve_image: true
+    roles:
+      - agent
+      - ha_standby
+    ip: 172.17.0.11
+    docker_network_options:
+      - '--ip=172.17.0.11'
+
+CONFIG:
+  type: foss
+  log_level: debug

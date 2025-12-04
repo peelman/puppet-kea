@@ -1,15 +1,16 @@
 # kea
 
 [![CI](https://github.com/peelman/puppet-kea/actions/workflows/ci.yml/badge.svg)](https://github.com/peelman/puppet-kea/actions/workflows/ci.yml)
-[![Puppet Forge](https://img.shields.io/puppetforge/v/peelman/kea.svg)](https://forge.puppetlabs.com/peelman/kea)
-[![Puppet Forge Downloads](https://img.shields.io/puppetforge/dt/peelman/kea.svg)](https://forge.puppetlabs.com/peelman/kea)
-[![License](https://img.shields.io/github/license/peelman/puppet-kea.svg)](https://github.com/peelman/puppet-kea/blob/main/LICENSE)
+[![Puppet Forge](https://img.shields.io/puppetforge/v/peelman/kea?labelColor=667&color=369)](https://forge.puppetlabs.com/peelman/kea)
+[![Puppet Forge Downloads](https://img.shields.io/puppetforge/dt/peelman/kea.svg?labelColor=667&color=%23369)](https://forge.puppetlabs.com/peelman/kea)
+[![License](https://img.shields.io/github/license/peelman/puppet-kea.svg?labelColor=667&color=369)](https://github.com/peelman/puppet-kea/blob/main/LICENSE)
 
 ## Table of Contents
 
 1. [Description](#description)
 2. [Setup](#setup)
 3. [Usage](#usage)
+   - [High Availability](#high-availability-ha)
 4. [Reference](#reference)
 5. [Examples](#examples)
 
@@ -176,26 +177,158 @@ kea::dhcp4:
   hooks_libraries:
     - library: '/usr/lib/x86_64-linux-gnu/kea/hooks/libdhcp_lease_cmds.so'
     - library: '/usr/lib/x86_64-linux-gnu/kea/hooks/libdhcp_stat_cmds.so'
-    - library: '/usr/lib/x86_64-linux-gnu/kea/hooks/libdhcp_ha.so'
-      parameters:
-        high-availability:
-          - this-server-name: 'server1'
-            mode: 'hot-standby'
-            heartbeat-delay: 10000
-            max-response-delay: 60000
-            max-unacked-clients: 5
-            peers:
-              - name: 'server1'
-                url: 'http://192.168.1.10:8000/'
-                role: 'primary'
-              - name: 'server2'
-                url: 'http://192.168.1.11:8000/'
-                role: 'standby'
   subnets:
     - id: 1
       subnet: '192.168.1.0/24'
       pools:
         - pool: '192.168.1.100 - 192.168.1.200'
+```
+
+### High Availability (HA)
+
+Kea supports high availability configurations with automatic failover. This module provides
+structured HA support with validated parameters. The module automatically configures the
+HA hook library and merges it with any manually specified hooks.
+
+**HA Modes:**
+- `hot-standby`: Active/passive failover. One primary handles all traffic; standby takes over on failure.
+- `load-balancing`: Active/active. Both servers handle traffic, with automatic failover.
+- `passive-backup`: Simple backup without state synchronization (Kea 2.4+).
+
+#### Hot-Standby Configuration
+
+```yaml
+# On server1.example.com (primary)
+kea::dhcp4:
+  enable: true
+  interfaces:
+    - 'eth0'
+  ha:
+    mode: 'hot-standby'
+    this_server: 'server1'  # Optional: auto-detected from $facts['networking']['fqdn']
+    heartbeat_delay: 10000
+    max_response_delay: 60000
+    max_unacked_clients: 5
+    peers:
+      - name: 'server1'
+        url: 'http://192.168.1.10:8000/'
+        role: 'primary'
+      - name: 'server2'
+        url: 'http://192.168.1.11:8000/'
+        role: 'standby'
+  subnets:
+    - id: 1
+      subnet: '192.168.1.0/24'
+      pools:
+        - pool: '192.168.1.100 - 192.168.1.200'
+```
+
+```yaml
+# On server2.example.com (standby)
+kea::dhcp4:
+  enable: true
+  interfaces:
+    - 'eth0'
+  ha:
+    mode: 'hot-standby'
+    this_server: 'server2'
+    heartbeat_delay: 10000
+    max_response_delay: 60000
+    max_unacked_clients: 5
+    peers:
+      - name: 'server1'
+        url: 'http://192.168.1.10:8000/'
+        role: 'primary'
+      - name: 'server2'
+        url: 'http://192.168.1.11:8000/'
+        role: 'standby'
+  subnets:
+    - id: 1
+      subnet: '192.168.1.0/24'
+      pools:
+        - pool: '192.168.1.100 - 192.168.1.200'
+```
+
+#### Load-Balancing Configuration
+
+In load-balancing mode, both servers actively serve DHCP requests. The servers coordinate
+lease assignments to prevent conflicts.
+
+```yaml
+kea::dhcp4:
+  enable: true
+  interfaces:
+    - 'eth0'
+  ha:
+    mode: 'load-balancing'
+    heartbeat_delay: 10000
+    max_response_delay: 60000
+    max_unacked_clients: 5
+    peers:
+      - name: 'server1'
+        url: 'http://192.168.1.10:8000/'
+        role: 'primary'
+      - name: 'server2'
+        url: 'http://192.168.1.11:8000/'
+        role: 'secondary'
+  subnets:
+    - id: 1
+      subnet: '192.168.1.0/24'
+      pools:
+        - pool: '192.168.1.100 - 192.168.1.200'
+```
+
+**Note:** In load-balancing mode, use `primary` and `secondary` roles (not `standby`).
+
+#### HA Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `mode` | String | - | HA mode: `hot-standby`, `load-balancing`, `passive-backup` |
+| `this_server` | String | auto | Name of this server (must match a peer name) |
+| `peers` | Array | - | Array of peer configurations |
+| `heartbeat_delay` | Integer | 10000 | Heartbeat interval in milliseconds |
+| `max_response_delay` | Integer | 60000 | Max time to wait for partner response (ms) |
+| `max_unacked_clients` | Integer | 5 | Failed client queries before failover |
+| `max_ack_delay` | Integer | - | Max delay for client acknowledgments (ms) |
+| `sync_timeout` | Integer | - | Lease database sync timeout (ms) |
+| `sync_page_limit` | Integer | - | Max leases per sync page |
+| `delayed_updates_limit` | Integer | - | Max queued lease updates |
+| `send_lease_updates` | Boolean | - | Enable lease update notifications |
+| `sync_leases` | Boolean | - | Enable lease synchronization |
+| `wait_backup_ack` | Boolean | - | Wait for backup server acknowledgment |
+| `multi_threading` | Hash | - | Multi-threading configuration |
+| `state_machine` | Hash | - | State machine timing configuration |
+
+Each peer in the `peers` array:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | String | Yes | Unique peer name (use FQDN for auto-detection) |
+| `url` | String | Yes | HTTP URL for HA communication |
+| `role` | String | Yes | Peer role: `primary`, `secondary`, `standby`, `backup` |
+| `auto_failover` | Boolean | No | Enable automatic failover for this peer (default: true) |
+
+#### Automatic Server Detection
+
+If `this_server` is not specified, the module automatically detects it by matching
+`$facts['networking']['fqdn']` against the peer names. This allows using the same Hiera
+configuration on both HA nodes:
+
+```yaml
+# In common.yaml - same config works on both servers
+kea::dhcp4:
+  enable: true
+  ha:
+    mode: 'hot-standby'
+    # this_server is auto-detected from FQDN
+    peers:
+      - name: 'dhcp1.example.com'
+        url: 'http://192.168.1.10:8000/'
+        role: 'primary'
+      - name: 'dhcp2.example.com'
+        url: 'http://192.168.1.11:8000/'
+        role: 'standby'
 ```
 
 ### Client Classes
@@ -467,6 +600,7 @@ Each shared network supports:
 | `control_socket` | Hash | enabled | Control socket config |
 | `sanity_checks` | Hash | - | Lease sanity checking config |
 | `expired_leases_processing` | Hash | - | Expired lease reclamation config |
+| `ha` | Hash | - | High availability configuration (see [HA section](#high-availability-ha)) |
 
 ### DHCPv6 Additional Options
 

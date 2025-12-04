@@ -1,9 +1,11 @@
 <%- |
-Hash                 $config,
-Stdlib::Absolutepath $config_dir,
-Stdlib::Absolutepath $run_dir,
-Stdlib::Absolutepath $log_dir,
-Stdlib::Absolutepath $lib_dir,
+Hash                   $config,
+Stdlib::Absolutepath   $config_dir,
+Stdlib::Absolutepath   $run_dir,
+Stdlib::Absolutepath   $log_dir,
+Stdlib::Absolutepath   $lib_dir,
+Optional[String[1]]    $ha_this_server = undef,
+Stdlib::Absolutepath   $hooks_lib_dir = '/usr/lib/x86_64-linux-gnu/kea/hooks',
 | -%>
 <%
 #lint:ignore:double_quoted_strings lint:ignore:strict_indent lint:ignore:comment_found lint:ignore:variables_not_enclosed lint:ignore:trailing_comma lint:ignore:140chars lint:ignore:manifest_whitespace_opening_brace_before
@@ -69,6 +71,66 @@ $calculate_tee_times = $config['calculate_tee_times']
 $t1_percent = $config['t1_percent']
 $t2_percent = $config['t2_percent']
 $allocator = $config['allocator']
+
+# High Availability configuration
+$ha_config = $config['ha']
+$ha_enabled = $ha_config != undef
+
+# Build the HA hook library configuration if HA is enabled
+if $ha_enabled {
+  # Determine this server name - use provided value or auto-detect
+  $_ha_this_server = $ha_this_server ? {
+    undef   => $ha_config['this_server'],
+    default => $ha_this_server,
+  }
+
+  # Build peers array for HA config
+  $_ha_peers = $ha_config['peers'].map |$name, $peer| {
+    {
+      'name'          => $name,
+      'url'           => $peer['url'],
+      'role'          => $peer['role'],
+      'auto-failover' => pick($peer['auto_failover'], true),
+    }
+  }
+
+  # Build the HA parameters hash
+  $_ha_params = {
+    'high-availability' => [{
+      'this-server-name'    => $_ha_this_server,
+      'mode'                => $ha_config['mode'],
+      'heartbeat-delay'     => pick($ha_config['heartbeat_delay'], 10000),
+      'max-response-delay'  => pick($ha_config['max_response_delay'], 60000),
+      'max-ack-delay'       => pick($ha_config['max_ack_delay'], 10000),
+      'max-unacked-clients' => pick($ha_config['max_unacked_clients'], 5),
+      'peers'               => $_ha_peers,
+    } + ($ha_config['send_lease_updates'] ? { undef => {}, default => { 'send-lease-updates' => $ha_config['send_lease_updates'] } })
+      + ($ha_config['sync_leases'] ? { undef => {}, default => { 'sync-leases' => $ha_config['sync_leases'] } })
+      + ($ha_config['sync_timeout'] ? { undef => {}, default => { 'sync-timeout' => $ha_config['sync_timeout'] } })
+      + ($ha_config['sync_page_limit'] ? { undef => {}, default => { 'sync-page-limit' => $ha_config['sync_page_limit'] } })
+      + ($ha_config['delayed_updates_limit'] ? { undef => {}, default => { 'delayed-updates-limit' => $ha_config['delayed_updates_limit'] } })
+      + ($ha_config['max_rejected_lease_updates'] ? { undef => {}, default => { 'max-rejected-lease-updates' => $ha_config['max_rejected_lease_updates'] } })
+      + ($ha_config['wait_backup_ack'] ? { undef => {}, default => { 'wait-backup-ack' => $ha_config['wait_backup_ack'] } })
+      + ($ha_config['multi_threading'] ? { undef => {}, default => { 'multi-threading' => {
+          'enable-multi-threading'  => pick($ha_config['multi_threading']['enable_multi_threading'], false),
+          'http-dedicated-listener' => pick($ha_config['multi_threading']['http_dedicated_listener'], false),
+          'http-listener-threads'   => pick($ha_config['multi_threading']['http_listener_threads'], 4),
+          'http-client-threads'     => pick($ha_config['multi_threading']['http_client_threads'], 4),
+        } } })
+    ],
+  }
+
+  # Build the HA hook library entry
+  $_ha_hook = {
+    'library'    => "${hooks_lib_dir}/libdhcp_ha.so",
+    'parameters' => $_ha_params,
+  }
+
+  # Merge HA hook with any existing hooks
+  $_all_hooks = $hooks_libraries + [$_ha_hook]
+} else {
+  $_all_hooks = $hooks_libraries
+}
 -%>
 {
     "Dhcp4": {
@@ -171,8 +233,8 @@ $allocator = $config['allocator']
         "client-classes": <%= stdlib::to_json($client_classes) %>,
 
 <%- } -%>
-<%- if !$hooks_libraries.empty { -%>
-        "hooks-libraries": <%= stdlib::to_json($hooks_libraries) %>,
+<%- if !$_all_hooks.empty { -%>
+        "hooks-libraries": <%= stdlib::to_json($_all_hooks) %>,
 
 <%- } -%>
 <%- if !$reservations.empty { -%>
